@@ -33,28 +33,46 @@ set.seed(1)
 
 ## Problem 2
 
-Import the data, and do some initial data manipulation, described as following:
+Import the data, and do some initial data manipulations, described as following:
+
 * Create a city_state variable
-* create a binary variable indicating whether the homicide is solved. (1 represents solved, 0 represents unsolved)
+* Create a binary variable indicating whether the homicide is solved. (1 represents solved, 0 represents unsolved)
 * Omit several cities
 * Limit analysis those for whom victim_race is white or black
-* change the type of victim_age to numeric
+* Change the type of victim_age to numeric
 
 ```{r}
 homicide_df = 
   read_csv("./data/homicide-data.csv") %>% 
+  janitor::clean_names() %>% 
   mutate(
     city_state = str_c(city, ', ',state),
     whether_solve = ifelse(str_detect(disposition, 'Close'), 1, 0)
   ) %>% 
+  select(-city, -state, -disposition) %>% 
   filter(
     !city_state %in% c('Dallas, TX', 'Phoenix, AZ','Kansas City, MO','Tulsa, AL'),
     victim_race %in% c('White','Black')
     ) %>% 
+  filter(victim_age != 'Unknown') %>% 
   mutate(victim_age = as.numeric(victim_age))
 ```
 
+For the city of Baltimore, MD, use the glm function to fit a logistic regression with resolved vs unresolved as the outcome and victim age, sex and race as predictors. Save the output of glm as an R object; apply the broom::tidy to this object;
 
+```{r}
+homicide_Bal_df = 
+  homicide_df %>% 
+  filter(city_state == 'Baltimore, MD') 
+
+Bal_glm = 
+  glm(whether_solve ~ victim_age + victim_sex + victim_race, family = binomial(link = logit), data = homicide_Bal_df) %>% 
+  broom::tidy()
+```
+
+
+
+ and obtain the estimate and confidence interval of the adjusted odds ratio for solving homicides comparing male victims to female victims keeping all other variables fixed.
 
 ## Problem 3
 
