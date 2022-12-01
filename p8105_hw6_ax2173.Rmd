@@ -125,3 +125,39 @@ Comments on this plot:
 
 ## Problem 3
 
+Import the data, load and clean the data for regression analysis.
+
+```{r}
+weight_df = 
+  read_csv('./data/birthweight.csv') %>% 
+  janitor::clean_names() %>% 
+  mutate(
+    babysex = as.factor(babysex),
+    frace = as.factor(frace),
+    mrace = as.factor(mrace),
+    malform = as.factor(malform)
+    ) %>% 
+  drop_na()
+```
+
+Propose a regression model for birthweight, and the modeling process: I make some hypothesis about these factors to effect the birth weight:
+
+* fincome (family monthly income): the family richer, more nutrition the mothers get;
+* malform (presence of malformations): the presence of malformations tend to effect the birth weight;
+* pnumlbw (previous number of low birth weight babies): the more previous number of low birth weight babies, the larger probability this baby present the low birth weight;
+* smoken (average number of cigarettes smoked per day during pregnancy): smoking during pregnancy tend to effect the birth weigh.
+
+```{r}
+bw_reg = lm(bwt ~ fincome + malform + pnumlbw + smoken, data = weight_df)
+```
+
+Show a plot of model residuals against fitted values – use add_predictions and add_residuals in making this plot.
+
+```{r}
+weight_df %>% 
+  add_predictions(bw_reg) %>% 
+  add_residuals(bw_reg) %>% 
+  ggplot(aes(x = resid, y = pred)) +
+  geom_point(alpha = .5)
+```
+
