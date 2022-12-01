@@ -76,6 +76,30 @@ As for solving homicides comparing male victims to female victims keeping all ot
  * The 95% confidence interval is (`r round(Bal_glm$estimate[[3]]-1.96*Bal_glm$std.error[[3]],3)`,`r round(Bal_glm$estimate[[3]]+1.96*Bal_glm$std.error[[3]],3)`)
 
 
+Now run glm for each of the cities in your dataset, and extract the adjusted odds ratio (and CI) for solving homicides comparing male victims to female victims. 
+
+```{r}
+homicide_df %>% 
+  nest(data = -city_state) %>% 
+  mutate(
+    models = purrr::map(.x = data, ~glm(whether_solve ~ victim_age + victim_sex + victim_race, family = binomial(link = logit), data = .x)),
+    result = purrr::map(models, broom::tidy)
+    ) %>% 
+  select(-data, -models) %>% 
+  unnest(result) %>% 
+  filter(term == 'victim_sexMale') %>% 
+  mutate(
+    CI_lowerbond = estimate - 1.96 * std.error,
+    CI_upperbond = estimate + 1.96 * std.error,
+  ) %>% 
+  select(city_state, estimate, CI_lowerbond, CI_upperbond) %>% 
+  knitr::kable(digits = 3)
+```
+
+
+
+
+
 
 ## Problem 3
 
