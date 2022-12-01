@@ -72,8 +72,8 @@ Bal_glm =
 
 As for solving homicides comparing male victims to female victims keeping all other variables fixed, we can get these two things:
 
- * The estimated odds ratio is `r round(Bal_glm$estimate[[3]],3)`
- * The 95% confidence interval is (`r round(Bal_glm$estimate[[3]]-1.96*Bal_glm$std.error[[3]],3)`,`r round(Bal_glm$estimate[[3]]+1.96*Bal_glm$std.error[[3]],3)`)
+ * The estimated odds ratio is `r round(exp(Bal_glm$estimate[[3]]),3)`
+ * The 95% confidence interval is (`r round(exp(Bal_glm$estimate[[3]]-1.96*Bal_glm$std.error[[3]]),3)`,`r round(exp(Bal_glm$estimate[[3]]+1.96*Bal_glm$std.error[[3]]),3)`)
 
 
 Now run glm for each of the cities in your dataset, and extract the adjusted odds ratio (and CI) for solving homicides comparing male victims to female victims. 
@@ -90,8 +90,9 @@ homicide_df_models =
   unnest(result) %>% 
   filter(term == 'victim_sexMale') %>% 
   mutate(
-    CI_lowerbond = estimate - 1.96 * std.error,
-    CI_upperbond = estimate + 1.96 * std.error,
+    odds_estimate = exp(estimate),
+    CI_lowerbond = exp(estimate - 1.96 * std.error),
+    CI_upperbond = exp(estimate + 1.96 * std.error),
   ) %>% 
   select(city_state, estimate, CI_lowerbond, CI_upperbond) 
 
@@ -194,7 +195,9 @@ weight_df_comparison =
     rmse_1 = map2_dbl(.x = model_1, .y = test, ~rmse(model = .x, data = .y)),
     rmse_2 = map2_dbl(.x = model_2, .y = test, ~rmse(model = .x, data = .y))
   )
+```
 
+```{r}
 weight_df_comparison %>% 
   select(starts_with('rmse')) %>% 
   pivot_longer(
