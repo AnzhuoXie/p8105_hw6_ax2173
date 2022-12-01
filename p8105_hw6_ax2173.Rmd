@@ -154,7 +154,7 @@ bw_reg_0 = lm(bwt ~ fincome + malform + pnumlbw + smoken, data = weight_df)
 
 Show a plot of model residuals against fitted values – use add_predictions and add_residuals in making this plot.
 
-```{r fig.width=6, fig.height=6}
+```{r fig.width=6, fig.height=6, warning = FALSE}
 weight_df %>% 
   add_predictions(bw_reg_0) %>% 
   add_residuals(bw_reg_0) %>% 
@@ -177,7 +177,7 @@ bw_reg_2 = lm(bwt ~ bhead + blength + babysex + bhead * blength + bhead * babyse
 
 Make this comparison in terms of the cross-validated prediction error; use crossv_mc and functions in purrr as appropriate.
 
-```{r fig.width=6, fig.height=6}
+```{r fig.width=6, fig.height=6, warning = FALSE}
 weight_df_comparison = 
   weight_df %>% 
   crossv_mc(100) %>% 
@@ -195,9 +195,7 @@ weight_df_comparison =
     rmse_1 = map2_dbl(.x = model_1, .y = test, ~rmse(model = .x, data = .y)),
     rmse_2 = map2_dbl(.x = model_2, .y = test, ~rmse(model = .x, data = .y))
   )
-```
 
-```{r}
 weight_df_comparison %>% 
   select(starts_with('rmse')) %>% 
   pivot_longer(
