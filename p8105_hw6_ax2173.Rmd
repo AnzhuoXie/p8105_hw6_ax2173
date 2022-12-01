@@ -148,16 +148,69 @@ Propose a regression model for birthweight, and the modeling process: I make som
 * smoken (average number of cigarettes smoked per day during pregnancy): smoking during pregnancy tend to effect the birth weigh.
 
 ```{r}
-bw_reg = lm(bwt ~ fincome + malform + pnumlbw + smoken, data = weight_df)
+bw_reg_0 = lm(bwt ~ fincome + malform + pnumlbw + smoken, data = weight_df)
 ```
 
 Show a plot of model residuals against fitted values – use add_predictions and add_residuals in making this plot.
 
-```{r}
+```{r fig.width=6, fig.height=6}
 weight_df %>% 
-  add_predictions(bw_reg) %>% 
-  add_residuals(bw_reg) %>% 
+  add_predictions(bw_reg_0) %>% 
+  add_residuals(bw_reg_0) %>% 
   ggplot(aes(x = resid, y = pred)) +
-  geom_point(alpha = .5)
+  geom_point(alpha = .5) +
+  labs(
+    title = 'Model Residuals against Fitted Values',
+    x = 'Residuals',
+    y = 'Fitted Values',
+    caption = 'UNI: ax2173'
+  )
 ```
 
+Construct two other models to make some comparisons between them.
+
+```{r}
+bw_reg_1 = lm(bwt ~ blength + gaweeks, data = weight_df)
+bw_reg_2 = lm(bwt ~ bhead + blength + babysex + bhead * blength + bhead * babysex + blength * babysex + bhead * blength * babysex, data = weight_df)
+```
+
+Make this comparison in terms of the cross-validated prediction error; use crossv_mc and functions in purrr as appropriate.
+
+```{r fig.width=6, fig.height=6}
+weight_df_comparison = 
+  weight_df %>% 
+  crossv_mc(100) %>% 
+  mutate(
+    train = map(train, as_tibble),
+    test = map(test, as_tibble)
+  ) %>% 
+  mutate(
+    model_0 = map(.x = train, ~lm(bwt ~ fincome + malform + pnumlbw + smoken, data = .x)),
+    model_1 = map(.x = train, ~lm(bwt ~ blength + gaweeks, data = .x)),
+    model_2 = map(.x = train, ~lm(bwt ~ bhead + blength + babysex + bhead * blength + bhead * babysex + blength * babysex + bhead * blength * babysex, data = .x))
+  ) %>% 
+  mutate(
+    rmse_0 = map2_dbl(.x = model_0, .y = test, ~rmse(model = .x, data = .y)),
+    rmse_1 = map2_dbl(.x = model_1, .y = test, ~rmse(model = .x, data = .y)),
+    rmse_2 = map2_dbl(.x = model_2, .y = test, ~rmse(model = .x, data = .y))
+  )
+
+weight_df_comparison %>% 
+  select(starts_with('rmse')) %>% 
+  pivot_longer(
+    everything(),
+    names_to = 'model',
+    values_to = 'rmse',
+    names_prefix = 'rmse_'
+  ) %>% 
+  ggplot(aes(x = model, y = rmse)) +
+  geom_violin() +
+  labs(
+    title = 'Comparison between Three Models',
+    x = 'Model',
+    y = 'rmse',
+    caption = 'UNI: ax2173'
+  )
+```
+
+From the chart, we can get the conclusion that my original model performs the worst, and the third model (model_2) performs the best.
